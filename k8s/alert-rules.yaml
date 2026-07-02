@@ -1,0 +1,66 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: target-app-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: target-app.rules
+      interval: 15s
+      rules:
+        # Alert 1: High Error Rate
+        - alert: HighErrorRate
+          expr: |
+            rate(http_requests_total{job="target-app-service", status=~"5.."}[1m])
+            /
+            rate(http_requests_total{job="target-app-service"}[1m]) > 0.1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate on target-app"
+            description: "Error rate is above 10% for more than 1 minute."
+
+        # Alert 2: Pod Restart Count
+        - alert: PodRestartingTooMuch
+          expr: |
+            increase(kube_pod_container_status_restarts_total{
+              namespace="default",
+              pod=~"target-app-.*"
+            }[5m]) > 3
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod restarting too frequently"
+            description: "Pod {{ $labels.pod }} has restarted more than 3 times in 5 minutes."
+
+        # Alert 3: High Latency
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              rate(http_request_duration_seconds_bucket{job="target-app-service"}[5m])
+            ) > 2
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency on target-app"
+            description: "95th percentile latency is above 2 seconds."
+
+        # Alert 4: Pod Not Ready
+        - alert: PodNotReady
+          expr: |
+            kube_pod_status_ready{
+              namespace="default",
+              pod=~"target-app-.*",
+              condition="true"
+            } == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Target app pod not ready"
+            description: "Pod {{ $labels.pod }} has been not ready for more than 1 minute."
