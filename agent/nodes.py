@@ -8,9 +8,14 @@ import os
 from tools.k8s_tool import restart_pod
 from tools.github_tool import create_issue
 from api.database import save_incidents
+from tools.slack_tool import send_slack_alert
 
 load_dotenv()
 model = ChatGroq(model="llama-3.3-70b-versatile")
+
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGSMITH_API_KEY")
+os.environ["LANGCHAIN_PROJECT"] = "self-healing-devops-agent"
 
 def observe_node(state: AgentState) -> dict:
     logs = state['logs']
@@ -110,6 +115,11 @@ def log_node(state: AgentState) -> dict:
     'action_taken': action_taken,
     'status': status
     })
+    # Slack alert bhejo
+    if status == "auto-resolved":
+       send_slack_alert(f"✅ *Auto-Resolved* | {diagnosis} | Confidence: {confidence*100:.0f}%")
+    else:
+       send_slack_alert(f"🚨 *Escalated* | {diagnosis} | Confidence: {confidence*100:.0f}% | Check GitHub Issues")
     print(f"Logging incident: {json.dumps(incident, indent=2)}")
     # Implement logging logic here (e.g., write to a database or file)
     return {}
