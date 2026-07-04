@@ -9,6 +9,7 @@ from tools.k8s_tool import restart_pod
 from tools.github_tool import create_issue
 from api.database import save_incidents
 from tools.slack_tool import send_slack_alert
+from agent.rag_tool import build_index, retrieve_similar
 
 load_dotenv()
 model = ChatGroq(model="llama-3.3-70b-versatile")
@@ -30,11 +31,22 @@ def observe_node(state: AgentState) -> dict:
 def diagnose_node(state: AgentState) -> dict:
     logs = state['logs']
     metrics = state['metrics']
+    result_index = build_index()
+    if result_index is None:
+        context = "No past incidents available yet. "
+    else:
+        index,incidents = result_index
+        similar = retrieve_similar(logs, index, incidents, k=3)
+        similar_summary = "\n".join(
+            f"Diagnosis: {row['diagnosis']} | Action: {row['action_taken']} | Outcome: {row['status']}"
+            for row in similar
+        )        
+        context = similar_summary
 
     SystemPrompt = """You are an expert SRE. Analyze the logs and metrics.
                  You MUST respond with ONLY a valid JSON object, no extra text, no markdown, no backticks.
                  Example: {"diagnosis": "Memory exhaustion", "confidence": 0.9}"""
-    UserPrompt = f"Logs: {logs}\nMetrics: {metrics}"
+    UserPrompt = f"Logs: {logs}\nMetrics: {metrics}\n\nSimilar past incidents:\n{context}"
    
 
     response = model.invoke([

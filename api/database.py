@@ -35,6 +35,7 @@ def save_incidents(incident: dict):
 
 def get_incidents():
     conn = sqlite3.connect("incidents.db")
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM incidents")
     rows = cursor.fetchall()
