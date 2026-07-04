@@ -1,6 +1,9 @@
 from langgraph.graph import StateGraph
+
 from agent.state import AgentState
 from agent.nodes import observe_node, diagnose_node, decide_node, act_node, verify_node, log_node
+from langgraph.checkpoint.memory import MemorySaver
+import uuid
 
 graph = StateGraph(AgentState)
 graph.add_node('observe', observe_node)
@@ -18,13 +21,23 @@ graph.add_edge('verify', 'log')
 
 graph.set_entry_point('observe')
 
-app = graph.compile()
+memory = MemorySaver()
+app = graph.compile(checkpointer=memory)
+
 
 
 if __name__ == "__main__":
+    config = {
+        "configurable" : {"thread_id": "test-thread-1"}
+    }
     result = app.invoke({
         "logs": "Some random unknown error occurred",
         "metrics": "cpu_usage: 45%, memory: 60%",
         "pod_name": "target-app-867d9c8996-7jt74"
-    })
-    print(result)
+    }, config=config)
+    result1 = app.invoke({ "logs": "Some random unknown error occurred", "metrics": "cpu_usage: 45%, memory: 60%", "pod_name": "target-app-867d9c8996-7jt74" }, config=config)
+    print("First run:", result1)
+
+    state = app.get_state(config)
+    print("Saved state:", state.values)
+
