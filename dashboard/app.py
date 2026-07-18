@@ -4,7 +4,7 @@ import time
 
 
 st.title("Self-Healing Devops Agent")
-response = requests.get("http://localhost:8080/incidents")
+response = requests.get("http://api:8080/incidents")
 data = response.json()
 
 for incident in data["incidents"]:

@@ -1,13 +1,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: target-app-alerts
-  namespace: monitoring
+  name: {{ .Values.alertRules.name }}
+  namespace: {{ .Values.alertRules.namespace }}
   labels:
-    release: monitoring
+    release: {{ .Values.alertRules.releaseLabel }}
 spec:
   groups:
-    - name: target-app.rules
+    - name: {{ .Values.targetApp.name }}.rules
       interval: 15s
       rules:
         # Alert 1: High Error Rate
@@ -35,7 +35,7 @@ spec:
             severity: critical
           annotations:
             summary: "Pod restarting too frequently"
-            description: "Pod {{ $labels.pod }} has restarted more than 3 times in 5 minutes."
+            description: "Pod {{ "{{" }} $labels.pod {{ "}}" }} has restarted more than 3 times in 5 minutes."
 
         # Alert 3: High Latency
         - alert: HighLatency
@@ -63,4 +63,4 @@ spec:
             severity: critical
           annotations:
             summary: "Target app pod not ready"
-            description: "Pod {{ $labels.pod }} has been not ready for more than 1 minute."
+            description: "Pod {{ "{{" }} $labels.pod {{ "}}" }} has been not ready for more than 1 minute."

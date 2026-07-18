@@ -1,0 +1,53 @@
+# Number of target-app pod replicas
+replicaCount: 2
+
+# Namespace jahan sab kuch deploy hoga
+namespace: default
+
+image:
+  repository: uzair785/self-healing-app
+  tag: v1
+
+targetApp:
+  name: target-app
+  containerPort: 8000
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "250m"
+
+probes:
+  path: /health
+  livenessInitialDelay: 10
+  livenessPeriod: 5
+  livenessFailureThreshold: 3
+  readinessInitialDelay: 5
+  readinessPeriod: 5
+
+service:
+  name: target-app-service
+  type: NodePort
+  port: 80
+  targetPort: 8000
+
+rbac:
+  serviceAccountName: self-healing-agent-sa
+  roleName: self-healing-agent-role
+  roleBindingName: self-healing-agent-binding
+
+serviceMonitor:
+  name: target-app-monitor
+  namespace: monitoring
+  releaseLabel: monitoring
+  appLabel: target-app
+  path: /metrics
+  interval: 15s
+
+alertRules:
+  name: target-app-alerts
+  namespace: monitoring
+  releaseLabel: monitoring

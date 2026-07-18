@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.targetApp.name }}            
+  namespace: {{ .Values.namespace }}        
+  labels:
+    app: {{ .Values.targetApp.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}          
+  selector:
+    matchLabels:
+      app: {{ .Values.targetApp.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.targetApp.name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ .Values.targetApp.containerPort }}"      
+    spec:
+      containers:
+        - name: {{ .Values.targetApp.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"            
+          ports:
+            - containerPort: {{ .Values.targetApp.containerPort }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: {{ .Values.targetApp.containerPort }}
+            initialDelaySeconds: {{ .Values.probes.livenessInitialDelay }}
+            periodSeconds: {{ .Values.probes.livenessPeriod }}
+            failureThreshold: {{ .Values.probes.livenessFailureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: {{ .Values.targetApp.containerPort }}
+            initialDelaySeconds: {{ .Values.probes.readinessInitialDelay }}
+            periodSeconds: {{ .Values.probes.readinessPeriod }}
