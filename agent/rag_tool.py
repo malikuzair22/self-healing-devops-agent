@@ -3,7 +3,9 @@ import faiss
 import numpy as np
 from api.database import get_incidents
 
-model = SentenceTransformer('/home/uzair/models/all-MiniLM-L6-v2')
+import os
+MODEL_PATH = os.getenv("EMBEDDING_MODEL_PATH", "sentence-transformers/all-MiniLM-L6-v2")
+model = SentenceTransformer(MODEL_PATH)
 def embed_text(text: str):
     embedding = model.encode(text)
     return embedding
