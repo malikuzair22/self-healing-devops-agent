@@ -22,7 +22,7 @@ def test_e2e_low_confidence_escalation(mock_create_issue, mock_send_slack):
 
 @patch('agent.nodes.restart_pod')
 @patch('agent.nodes.send_slack_alert')
-@patch('agent.nodes.diagnose_node')
+@patch('agent.nodes.model')
 def test_e2e_high_confidence_autofix(mock_model, mock_slack, mock_restart):
     fake_response = type('obj', (), {'content': '{"diagnosis": "Memory exhaustion", "confidence": 0.95}'})()
     mock_model.invoke.return_value = fake_response 
