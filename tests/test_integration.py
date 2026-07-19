@@ -1,5 +1,14 @@
 from tools.k8s_tool import scale_deployment, restart_pod
 
+import os
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Integration tests require a real Minikube cluster, not available in CI"
+)
+
+
 def test_scale_deployment_integration():
     result = scale_deployment('target-app', 3)
 

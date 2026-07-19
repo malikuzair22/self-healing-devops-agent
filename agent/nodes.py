@@ -72,7 +72,7 @@ def diagnose_node(state: AgentState) -> dict:
 
 def decide_node(state: AgentState)  -> dict:
     confidence = state['confidence']
-    if confidence >= float(os.getenv('CONFIDENCE_THRESHOLD')):
+    if confidence >= float(os.getenv('CONFIDENCE_THRESHOLD', '0.75')):
         return {'status': 'auto-fix'}
     else:
         return {'status': 'manual-review'}
